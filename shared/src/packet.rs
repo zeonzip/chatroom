@@ -1,4 +1,7 @@
+use serde::{Deserialize, Serialize};
+
 /// Packets sent from the Client, to the Server. (Serverbound)
+#[derive(Deserialize, Serialize)]
 pub enum ServerboundPacket {
     // TODO: Add RSA handshake.
     Login {
@@ -8,11 +11,16 @@ pub enum ServerboundPacket {
         token: String,
         message: String,
     },
-    Heartbeat,
-    Disconnect,
+    Heartbeat {
+        token: String,
+    },
+    Disconnect {
+        token: String,
+    },
 }
 
 /// Packets sent from the Server, to the Client. (Clientbound)
+#[derive(Serialize, Deserialize)]
 enum ClientboundPacket {
     // TODO: Add RSA Handshake response.
     Token {
@@ -27,7 +35,17 @@ enum ClientboundPacket {
     },
 }
 
+enum Packet {
+    Clientbound(ClientboundPacket),
+    Serverbound(ServerboundPacket),
+}
+
+enum PacketRecieveError {
+    InvalidLength,
+    PacketParseError,
+}
+
 pub trait PacketHandler {
-    async fn send_packet(&self);
-    async fn recieve_packet(&self);
+    async fn send_packet(&self, packet: Packet);
+    async fn recieve_packet(&self) -> Result<Packet, PacketRecieveError>;
 }
