@@ -4,7 +4,12 @@ pub enum ServerboundPacket {
     Login {
         username: String,
     },
-
+    Message {
+        token: String,
+        message: String,
+    },
+    Heartbeat,
+    Disconnect,
 }
 
 /// Packets sent from the Server, to the Client. (Clientbound)
@@ -20,4 +25,10 @@ enum ClientboundPacket {
     Kicked {
         reason: String,
     },
+}
+
+
+
+pub struct PacketHandler {
+
 }
