@@ -27,8 +27,7 @@ enum ClientboundPacket {
     },
 }
 
-
-
-pub struct PacketHandler {
-
+pub trait PacketHandler {
+    async fn send_packet(&self);
+    async fn recieve_packet(&self);
 }
