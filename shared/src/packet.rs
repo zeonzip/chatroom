@@ -55,7 +55,7 @@ pub enum PacketRecieveError {
 #[async_trait]
 pub trait PacketHandler {
     async fn send_packet(&self, packet: Packet);
-    async fn recieve_packet(&self) -> Result<Packet, PacketRecieveError>;
+    async fn receive_packet(&self) -> Result<Packet, PacketRecieveError>;
 }
 
 impl PacketHandler for TcpStream {
@@ -71,7 +71,7 @@ impl PacketHandler for TcpStream {
     }
 
     // TODO: Fix edge cases for reading and length
-    async fn recieve_packet(&mut self) -> io::Result<Packet> {
+    async fn receive_packet(&mut self) -> io::Result<Packet> {
         let mut len_buf = [0u8; 4]; // u32, since 4 * 4 * 4 * 4 = 32
         self.read(&mut len_buf).await?;
         let len = u32::from_be_bytes(len_buf);
