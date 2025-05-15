@@ -9,8 +9,8 @@ async-trait = "0.1.88"
 uuid = "1.16.0"
 
 [dependencies.bincode]
-version = "2.0.1"
-features = ["serde"]
+# using v1.3 because 2.0 introduces uneccesary complexity
+version = "1.3"
 
 [dependencies.tokio]
 version = "1.45.0"

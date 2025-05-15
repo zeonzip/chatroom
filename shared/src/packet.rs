@@ -1,10 +1,11 @@
+// todos are getting fixed later, just want to make the server to work (generally) first.
+// won't say no to PR's fixing todos tho!
+
 use std::io;
 use tokio::net::TcpStream;
 use async_trait::async_trait;
-use bincode::config::Configuration;
 use serde::{Deserialize, Serialize};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
-use uuid::Uuid;
 
 /// Packets sent from the Client, to the Server. (Serverbound)
 #[derive(Deserialize, Serialize)]
@@ -13,8 +14,9 @@ pub enum ServerboundPacket {
     Login {
         username: String,
     },
+    // no username bundled for more customization on the server.
     Message {
-        token: Uuid,
+        token: String,
         message: String,
     },
     Heartbeat {
@@ -30,12 +32,12 @@ pub enum ServerboundPacket {
 pub enum ClientboundPacket {
     // TODO: Add RSA Handshake response.
     Token {
-        token: Uuid,
+        token: String,
     },
     Message {
         msg: String,
     },
-    HearbeatReq,
+    HeartbeatReq,
     Kicked {
         reason: String,
     },
@@ -47,21 +49,17 @@ pub enum Packet {
     Serverbound(ServerboundPacket),
 }
 
-pub enum PacketRecieveError {
-    InvalidLength,
-    PacketParseError,
+#[async_trait]
+pub trait PacketHandler {
+    async fn send_packet(&mut self, packet: Packet) -> io::Result<()>;
+    async fn receive_packet(&mut self) -> io::Result<Packet>;
 }
 
 #[async_trait]
-pub trait PacketHandler {
-    async fn send_packet(&self, packet: Packet);
-    async fn receive_packet(&self) -> Result<Packet, PacketRecieveError>;
-}
-
 impl PacketHandler for TcpStream {
-    async fn send_packet(&mut self, packet: Packet,) -> io::Result<()> {
+    async fn send_packet(&mut self, packet: Packet) -> io::Result<()> {
         // TODO: Do error handling instead of unwrapping
-        let bytes = bincode::serde::encode_to_vec(packet, Configuration::default()).unwrap();
+        let bytes = bincode::serialize(&packet).unwrap();
         let len = bytes.len() as u32;
 
         self.write_all(&len.to_be_bytes()).await?;
@@ -73,15 +71,15 @@ impl PacketHandler for TcpStream {
     // TODO: Fix edge cases for reading and length
     async fn receive_packet(&mut self) -> io::Result<Packet> {
         let mut len_buf = [0u8; 4]; // u32, since 4 * 4 * 4 * 4 = 32
-        self.read(&mut len_buf).await?;
+        self.read_exact(&mut len_buf).await?;
         let len = u32::from_be_bytes(len_buf);
 
         let mut packet_buf = vec![0u8; len as usize];
-        self.read(&mut packet_buf).await?;
+        self.read_exact(&mut packet_buf).await?;
 
         // TODO: Do error handling instead of unwrapping
-        let packet = bincode::serde::decode_from_slice::<Packet, Configuration>(&packet_buf, Configuration::default()).unwrap();
+        let packet: Packet = bincode::deserialize(&packet_buf).unwrap();
 
-        Ok(packet.0)
+        Ok(packet)
     }
 }

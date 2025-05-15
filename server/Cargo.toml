@@ -4,15 +4,10 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+rand = "0.9.1"
 shared = { path = "../shared" }
 
-[dependencies.uuid]
-version = "1.16.0"
-# Lets you generate random UUIDs
-features = [
-    "v4",
-]
 
 [dependencies.tokio]
 version = "1.45.0"
-features = ["net", "io-util"]
+features = ["net", "io-util", "rt", "sync", "rt-multi-thread", "macros"]
